@@ -25,6 +25,8 @@ float distance;
 int raceOver;
 long startTime;
 long elapsedTime;
+long boostStartTime = 0;
+
 
 // Setup
 void setup()
@@ -98,53 +100,38 @@ void startSignal() // Shows start signal
 // Starts Race
 void RaceOngoing()
 {
-  	// Race starts, track power on
-  	digitalWrite(track,HIGH);//analogWrite(track, 200);  
-  	// MAKE SURE RACE ALWAYS LASTS LONGER THAN TIME FOR START SIGNAL TO TURN OFF
-  	// REWORK TO MAKE BOOST WORK DURING FIRST COUPLE SECONDS OR SHOW SIGNAL FOR WHEN BOOST CAN BE USED
-  
-  	// checks for boost press or end of race after start light turns off        
-  	while (raceOver == 0)
-  	{ 
-      if (boostsLeft > 0)
-      {
-  		  boostButton(); // sets boostStateSet to 0, increases voltage
-      }
-    	if (boostActive == 1) // turns on boost if boost button is pressed
-    	{
-  	  	for (int i=0; i<=10; i++) // boosts for 1 second or until race ends
-    		{
-        	lcdTime(); // Updates race timer
-        	raceEnded(); // checks if race has ended
-        	if(raceOver == 1) // breaks boost if race is over
-        	{
-          	i = 11;
-        	}
-        	delay2(100);
+    analogWrite(track, 150); // Normal speed
+
+    while (raceOver == 0)
+    { 
+        boostButton(); // Check if boost is triggered
+        
+        // If boost is active, check if it should end
+        if (boostActive == 1 && millis() - boostStartTime >= 1000) 
+        {
+            boostActive = 0; // Reset boost
+            analogWrite(track, 150); // Return to normal speed
         }
-        //digitalWrite(track,HIGH);//analogWrite(track, 200);  
-        boostActive = 0; // sets boost active to 0
-      }
-      digitalWrite(track,HIGH);//analogWrite(track, 200); 
-      lcdTime(); // Updates race timer
-    	raceEnded(); // checks if race has ended
-    	delay2(100);
+
+        lcdTime(); // Update race timer
+        raceEnded(); // Check if race has ended
+        delay2(100); 
     }
-  // ADD SOUND EFFECT LATER
+
+    analogWrite(track, 0); // Stop track at race end
 }
 
 // Uses Speed Boost
-void boostButton() // checks if startState is HIGH and returns 1 if so, 0 otherwise
+void boostButton()
 {
-
-  	boostState = digitalRead(boostPress);
-  		if(boostState == HIGH)
-  		{
-      		boostsLeft--; // set boostsLeft to 0
-        	boostActive = 1;
-        	analogWrite(track, 255); // turn on boost
-    	}
-
+    boostState = digitalRead(boostPress);
+    if (boostState == HIGH && boostsLeft > 0 && boostActive == 0) 
+    {
+        boostsLeft--; // Consume boost
+        boostActive = 1; 
+        boostStartTime = millis(); // Store the boost start time
+        analogWrite(track, 255); // Turn on boost
+    }
 }
 
 // Checks if race is over
