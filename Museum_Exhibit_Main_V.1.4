@@ -1,0 +1,232 @@
+#include <LiquidCrystal.h>
+
+const int startPress = 5;
+const int boostPress = 4;
+const int track = 3; 
+const int trigPin = 6; // connects to the trigger pin on the distance sensor
+const int echoPin = 7; // connects to the echo pin on the distance sensor
+
+// Initializing LCD
+const int rs = 8, en = 2, d4 = 10, d5 = 11, d6 = 12, d7 = 13;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+//contrast variable for LCD
+const int contrast = 50;
+const int contrastPin = 9;
+
+int startState;
+int startStateSet;
+int boostState;
+int boostStateSet; 
+int boostsLeft;
+int boostActive;
+int lapCount;
+const int lapMax = 3;
+const int sensorDelay = 1000; // Delay between lap counts
+float duration;
+float distance;
+int raceOver;
+long startTime;
+long elapsedTime;
+long boostStartTime = 0;
+long lapCountDelay;
+
+// Setup
+void setup()
+{
+    pinMode(startPress, INPUT);
+    pinMode(boostPress, INPUT);
+    pinMode(contrastPin, OUTPUT);
+
+  
+    pinMode(trigPin, OUTPUT); //the trigger pin will output pulses of electricity
+    pinMode(echoPin, INPUT); //the echo pin will measure the duration of pulses coming back from the distance sensor
+  	
+
+  	lcd.begin(16, 2); //tell the lcd library that we are using a display that is 16 characters wide and 2 characters high
+  	lcd.clear(); //clear the display
+  
+    analogWrite(contrastPin, contrast);
+
+  	boostsLeft = 1;
+}
+
+// Main Function
+void loop()
+{
+  	waitForStart(); // Checks for start button press then shows starting signal
+}
+
+// Waits for start button press
+void waitForStart() // Checks for start button press then calls startSignal()
+{
+  // Resets Neccessary Variables for all functions
+	startState = LOW;
+	startStateSet = 0;
+	boostState = LOW;
+	boostStateSet = 0; 
+	boostsLeft = 5;
+	boostActive = 0;
+	raceOver = 0;
+	distance = 0; 
+  lapCount = 1;
+  lapCountDelay = 0;
+  	// waits for start button
+  	while (startStateSet == 0)
+  	{ 
+  		startStateSet = startButton(); // sets startStateSet to startButton()
+    	delay(100);
+  	}
+  	delay(500); // delay before start signal goes off
+  	startSignal(); // Shows start signal 
+  	RaceOngoing(); // Race Starts
+}
+
+// Checks for start button press
+int startButton() // checks if startState is HIGH and returns 1 if so, 0 otherwise
+{
+  	startState = digitalRead(startPress);
+    	if(startState == HIGH)
+    	{
+        	return 1;
+    	}
+  	return 0;
+}
+
+// Shows start signal
+void startSignal() // Shows start signal
+{
+  	// turns on LCD timer
+  	lcdON();
+  	delay(3000);
+  	lcdTime(); // Updates race timer
+}
+
+// Starts Race
+void RaceOngoing()
+{
+    analogWrite(track, 150); // Normal speed
+
+    while (lapCount <= lapMax)
+    { 
+        boostButton(); // Check if boost is triggered
+        // If boost is active, check if it should end
+        if (boostActive == 1 && millis() - boostStartTime >= 2000) 
+        {
+            boostActive = 0; // Reset boost
+            analogWrite(track, 150); // Return to normal speed
+        }
+        if (millis() > lapCountDelay) // Waits till car has passed ultrasonic sensor
+        {
+          lcdLapCount(); // Checks if lap is completed and if race has ended
+        }
+        lcdTime(); // Update race timer
+        delay2(100); 
+    }
+
+    analogWrite(track, 0); // Stop track at race end
+}
+
+// Uses Speed Boost
+void boostButton()
+{
+    boostState = digitalRead(boostPress);
+    if (boostState == HIGH && boostsLeft > 0 && boostActive == 0) 
+    {
+        boostsLeft--; // Consume boost
+        boostActive = 1; 
+        boostStartTime = millis(); // Store the boost start time
+        analogWrite(track, 255); // Turn on boost
+    }
+}
+
+// Updates Lap count
+void lcdLapCount()
+{
+  distance = getDistance(); // variable to store the distance measured by the sensor
+  lapCountDelay = millis() + sensorDelay; // Sets 500 ms delay for ultrasonic Sensor
+  if (distance <= 5) // change to working value
+  {
+    lapCount++; // increases lap count by 1
+    if (lapCount <= lapMax)
+    {
+      lcd.setCursor(0,1); // Sets cursor to bottom row
+      lcd.print("                "); // clears bottom row
+      lcd.setCursor(0,1);
+      lcd.print("Lap: ");
+      lcd.setCursor(6,1);
+      lcd.print(lapCount);
+      lcd.setCursor(7,1);
+      lcd.print("/");
+      lcd.setCursor(8,1);
+      lcd.print(lapMax); // Prints Lap Count
+    }
+
+    if (lapCount > lapMax) // Checks if final lap is completed
+    {
+      lcdTime(); // Updates timer;
+      analogWrite(track, 0); // Powers off track;
+    }
+  }
+}
+
+// Checks distance from ultrasonic sensor
+int getDistance()
+{
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  distance = (duration*.0343)/2;
+  return distance;
+}
+
+// Turns on LCD screen and displays start time
+void lcdON()
+{
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Time: 00:00");
+  lcd.setCursor(0,1);
+  lcd.print("Lap: 1/");
+  lcd.print(lapMax);
+  startTime = millis() + 3000;
+}
+
+// Turns off LCD scree
+void lcdOFF()
+{
+  analogWrite(9, 0);
+}
+
+// Updates LCD timer
+void lcdTime()
+{
+   	elapsedTime = millis() - startTime;
+  	unsigned long minutes = (elapsedTime / 60000) % 60;
+  	unsigned long seconds = (elapsedTime / 1000) % 60;
+  	unsigned long milliseconds = (elapsedTime % 100);
+
+  	// Format the time
+  	String raceTimer = "Time: " + String(minutes, 10) + ":" + String(seconds, 10) + ":" + String(milliseconds, 10);
+
+  	// Update the LCD timer
+  	lcd.setCursor(0,0);
+    lcd.print("                ");
+    lcd.setCursor(0,0);
+  	lcd.print(raceTimer);
+}            
+
+// Use for delays so timer updates properly, min time 100 ms
+void delay2(int time)
+{
+  for(int i = 0; i <= (time/100); i++)
+  {
+      lcdTime();
+      boostButton();
+      delay(100);
+  }
+}
