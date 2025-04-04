@@ -105,8 +105,7 @@ void startSignal() // Shows start signal
 // Starts Race
 void RaceOngoing()
 {
-    analogWrite(track, 150); // Normal speed
-
+    analogWrite(track, 200); // Normal speed
     while (lapCount <= lapMax)
     { 
         boostButton(); // Check if boost is triggered
@@ -114,7 +113,7 @@ void RaceOngoing()
         if (boostActive == 1 && millis() - boostStartTime >= 2000) 
         {
             boostActive = 0; // Reset boost
-            analogWrite(track, 150); // Return to normal speed
+            analogWrite(track, 200); // Return to normal speed
         }
         if (millis() > lapCountDelay) // Waits till car has passed ultrasonic sensor
         {
@@ -145,7 +144,7 @@ void lcdLapCount()
 {
   distance = getDistance(); // variable to store the distance measured by the sensor
   lapCountDelay = millis() + sensorDelay; // Sets 500 ms delay for ultrasonic Sensor
-  if (distance <= 5) // change to working value
+  if (distance <= 10) // change to working value
   {
     lapCount++; // increases lap count by 1
     if (lapCount <= lapMax)
