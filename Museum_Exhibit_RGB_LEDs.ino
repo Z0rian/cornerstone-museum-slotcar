@@ -1,8 +1,8 @@
 const int red1 = 2;
-const int red2 = 6;
+const int red2 = 5;
 const int red3 = 8;
 const int blue1 = 3;
-const int blue2 = 5;
+const int blue2 = 6;
 const int blue3 = 9;
 const int green1 = 4;
 const int green2 = 7;
@@ -15,10 +15,10 @@ int startStateSet;
 // Setup
 void setup()
 {
-	  pinMode(red1, OUTPUT);
+    pinMode(red1, OUTPUT);
     pinMode(red2, OUTPUT);
     pinMode(red3, OUTPUT);
-  	pinMode(blue1, OUTPUT);
+    pinMode(blue1, OUTPUT);
     pinMode(blue2, OUTPUT);
     pinMode(blue3, OUTPUT);
     pinMode(green1, OUTPUT);
@@ -26,7 +26,7 @@ void setup()
     pinMode(green3, OUTPUT);
     pinMode(startPress, INPUT);
 
-  	digitalWrite(blue1, LOW);
+    digitalWrite(blue1, LOW);
     digitalWrite(blue2, LOW);
     digitalWrite(blue3, LOW);
     digitalWrite(green1, LOW);
@@ -40,7 +40,7 @@ void setup()
 // Main Function
 void loop()
 {
-  startSignal();
+  //startSignal();
   
   waitForStart(); // Checks for start button press then shows starting signal
 }
@@ -51,7 +51,7 @@ void waitForStart() // Checks for start button press then calls startSignal()
   	// Resets Neccessary Variables for all functions
 	startState = LOW;
 	startStateSet = 0;
-  // waits for start button
+        // waits for start button
 	while (startStateSet == 0)
   { 
 		startStateSet = startButton(); // sets startStateSet to startButton()
