@@ -47,8 +47,6 @@ void setup()
   	lcd.clear(); //clear the display
   
     analogWrite(contrastPin, contrast);
-
-  	boostsLeft = 1;
 }
 
 // Main Function
@@ -115,9 +113,12 @@ void RaceOngoing()
             boostActive = 0; // Reset boost
             analogWrite(track, 200); // Return to normal speed
         }
-        if (millis() > lapCountDelay) // Waits till car has passed ultrasonic sensor
+        if (millis() > 2000) // Waits till car has passed ultrasonic sensor
         {
-          lcdLapCount(); // Checks if lap is completed and if race has ended
+          if (millis() > lapCountDelay)
+          {
+            lcdLapCount(); // Checks if lap is completed and if race has ended
+          }
         }
         lcdTime(); // Update race timer
         delay2(100); 
@@ -143,9 +144,9 @@ void boostButton()
 void lcdLapCount()
 {
   distance = getDistance(); // variable to store the distance measured by the sensor
-  lapCountDelay = millis() + sensorDelay; // Sets 500 ms delay for ultrasonic Sensor
   if (distance <= 10) // change to working value
   {
+    lapCountDelay = millis() + sensorDelay; // Sets 500 ms delay for ultrasonic Sensor
     lapCount++; // increases lap count by 1
     if (lapCount <= lapMax)
     {
@@ -160,7 +161,6 @@ void lcdLapCount()
       lcd.setCursor(8,1);
       lcd.print(lapMax); // Prints Lap Count
     }
-
     if (lapCount > lapMax) // Checks if final lap is completed
     {
       lcdTime(); // Updates timer;
@@ -222,10 +222,21 @@ void lcdTime()
 // Use for delays so timer updates properly, min time 100 ms
 void delay2(int time)
 {
-  for(int i = 0; i <= (time/100); i++)
+  int count = 0;
+  for(int i = 0; i <= (time/10); i++)
   {
-      lcdTime();
+      if (count>=10)
+      {
+        lcdTime();
+
+        count = 0;
+      }
+      if (millis() > lapCountDelay)
+      {
+        lcdLapCount(); // Checks if lap is completed and if race has ended
+      }
       boostButton();
-      delay(100);
+      delay(10);
+      count++;
   }
 }
