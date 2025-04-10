@@ -21,6 +21,7 @@ int boostStateSet;
 int boostsLeft;
 int boostActive;
 int lapCount;
+int firstLap;
 const int lapMax = 3;
 const int sensorDelay = 1000; // Delay between lap counts
 float duration;
@@ -69,6 +70,7 @@ void waitForStart() // Checks for start button press then calls startSignal()
 	distance = 0; 
   lapCount = 1;
   lapCountDelay = 0;
+  firstLap = true;
   	// waits for start button
   	while (startStateSet == 0)
   	{ 
@@ -188,7 +190,7 @@ void lcdON()
 {
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Time: 00:00");
+  lcd.print("Time: 0:0:00");
   lcd.setCursor(0,1);
   lcd.print("Lap: 1/");
   lcd.print(lapMax);
