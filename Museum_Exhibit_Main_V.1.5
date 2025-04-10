@@ -22,7 +22,9 @@ int boostsLeft;
 int boostActive;
 int lapCount;
 int firstLap;
-const int lapMax = 3;
+const int mainSpeed = 200;
+const int boostSpeed = 255;
+const int lapMax = 5;
 const int sensorDelay = 1000; // Delay between lap counts
 float duration;
 float distance;
@@ -105,7 +107,7 @@ void startSignal() // Shows start signal
 // Starts Race
 void RaceOngoing()
 {
-    analogWrite(track, 200); // Normal speed
+    analogWrite(track, mainSpeed); // Normal speed
     while (lapCount <= lapMax)
     { 
         boostButton(); // Check if boost is triggered
@@ -113,7 +115,7 @@ void RaceOngoing()
         if (boostActive == 1 && millis() - boostStartTime >= 2000) 
         {
             boostActive = 0; // Reset boost
-            analogWrite(track, 200); // Return to normal speed
+            analogWrite(track, mainSpeed); // Return to normal speed
         }
         if (millis() > 2000) // Waits till car has passed ultrasonic sensor
         {
@@ -138,7 +140,7 @@ void boostButton()
         boostsLeft--; // Consume boost
         boostActive = 1; 
         boostStartTime = millis(); // Store the boost start time
-        analogWrite(track, 255); // Turn on boost
+        analogWrite(track, boostSpeed); // Turn on boost
     }
 }
 
@@ -149,25 +151,29 @@ void lcdLapCount()
   if (distance <= 10) // change to working value
   {
     lapCountDelay = millis() + sensorDelay; // Sets 500 ms delay for ultrasonic Sensor
-    lapCount++; // increases lap count by 1
-    if (lapCount <= lapMax)
+    if (firstLap == false)
     {
-      lcd.setCursor(0,1); // Sets cursor to bottom row
-      lcd.print("                "); // clears bottom row
-      lcd.setCursor(0,1);
-      lcd.print("Lap: ");
-      lcd.setCursor(6,1);
-      lcd.print(lapCount);
-      lcd.setCursor(7,1);
-      lcd.print("/");
-      lcd.setCursor(8,1);
-      lcd.print(lapMax); // Prints Lap Count
+      lapCount++; // increases lap count by 1
+      if (lapCount <= lapMax)
+      {
+        lcd.setCursor(0,1); // Sets cursor to bottom row
+        lcd.print("                "); // clears bottom row
+        lcd.setCursor(0,1);
+        lcd.print("Lap: ");
+        lcd.setCursor(6,1);
+        lcd.print(lapCount);
+        lcd.setCursor(7,1);
+        lcd.print("/");
+        lcd.setCursor(8,1);
+        lcd.print(lapMax); // Prints Lap Count
+      }
+      if (lapCount > lapMax) // Checks if final lap is completed
+      {
+        lcdTime(); // Updates timer;
+        analogWrite(track, 0); // Powers off track;
+      }
     }
-    if (lapCount > lapMax) // Checks if final lap is completed
-    {
-      lcdTime(); // Updates timer;
-      analogWrite(track, 0); // Powers off track;
-    }
+    firstLap = false;
   }
 }
 
@@ -227,10 +233,9 @@ void delay2(int time)
   int count = 0;
   for(int i = 0; i <= (time/10); i++)
   {
-      if (count>=10)
+      if (count>=5)
       {
         lcdTime();
-
         count = 0;
       }
       if (millis() > lapCountDelay)
